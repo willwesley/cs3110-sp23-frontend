@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Cats Dot Com Admin</title>
+<style>
+section {
+  max-width: 35em;
+  margin: auto;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+tbody tr:nth-child(odd) {
+  background: lightgreen;
+}
+td {
+  text-align: center;
+  padding: .5em;
+}
+td:first-child,
+td:last-child {
+  cursor: pointer;
+  color: blue;
+}
+td:first-child:hover,
+td:last-child:hover {
+  background: green;
+}
+label {
+  width: 40%;
+  display: inline-block;
+}
+input {
+  width: 50%;
+}
+</style>
+</head>
+<body>
+  <section>
+    <h2>Create User</h2>
+    <form method="POST" action="/api/users">
+      <fieldset>
+        <label for="user">User Name:</label>
+        <input id="user" name="user" />
+      </fieldset>
+      <fieldset>
+        <label for="pass">Password:</label>
+        <input id="pass" name="pass" />
+      </fieldset>
+      <fieldset>
+        <label for="admin">Admin:</label>
+        <input id="admin" name="admin" type="checkbox" value="yes" />
+      </fieldset>
+      <fieldset>
+        <label></label>
+        <input type="submit" value="Create" />
+      </fieldset>
+    </form>
+  </section>
+  <section>
+    <h2>Users</h2>
+    <table>
+      <thead>
+        <tr>
+          <th></th>
+          <th>username</th>
+          <th>password</th>
+          <th>authorization</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="users">
+      </tbody>
+    </table>
+  </section>
+
+
+<script>
+  // helper to create table cells
+  const td = (t, c) => {
+    const el = document.createElement("td")
+    el.innerHTML = t
+    // if we have a second arg, assume itsa function
+    c && (el.onclick = c)
+    return el
+  }
+  const makeUser = user => {
+      const r = document.createElement("tr")
+
+      // first column is delete button
+      r.appendChild(td("&#x1F5D1;", () => 
+          fetch("/api/users/" + user[0],
+            { method: "DELETE" }).then(updateUsers)))
+
+      // username, pass, authorization
+      r.appendChild(td(user[0]))
+      r.appendChild(td("*****"))
+      r.appendChild(td(user[1].admin ? "admin" : "author"))
+
+      // edit button
+      r.appendChild(td("&#x2699;", () => {
+        // using prompt and confirm because lazy
+        const u = prompt("Username", user[0])
+        if(!u) {
+          return
+        }
+        const pass = prompt("Password (leave blank to keep current)")
+        const admin = confirm("Make an admin?")
+        fetch("/api/users", {
+            method: "PUT",
+            body: JSON.stringify({ user: u, pass, admin })
+        }).then(updateUsers)
+      }))
+      return r
+  }
+ 
+  // sync with server
+  const updateUsers = async () => {
+      const r = await fetch("/api/users")
+      const json = Object.entries(await r.json())
+      const users = json.map(makeUser)
+      document.getElementById("users").replaceChildren(...users)
+  }
+
+  window.addEventListener("load", updateUsers);
+
+</script>
+
+</body>
+</html>

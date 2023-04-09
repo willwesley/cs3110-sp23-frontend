@@ -1,0 +1,25 @@
+  img {
+    float:right;
+    margin-left: 10px;
+  }
+  p {
+    text-align: justify;
+  }
+  header {
+    text-align: center;
+  }
+  header img {
+    float: none;
+    display: inline-block;
+    border-radius: 100px;
+  }
+  header h1 {
+    display: inline-block;
+  }
+  #roundcat {
+    border-radius: 500px;
+  }
+  a:visited {
+    color: blue;
+  }
+
