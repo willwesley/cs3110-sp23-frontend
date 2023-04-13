@@ -90,24 +90,24 @@ input {
 
       // first column is delete button
       r.appendChild(td("&#x1F5D1;", () => 
-          fetch("/api/users/" + user[0],
+          fetch("/api/users/" + user.cid,
             { method: "DELETE" }).then(updateUsers)))
 
       // username, pass, authorization
-      r.appendChild(td(user[0]))
+      r.appendChild(td(user.user))
       r.appendChild(td("*****"))
-      r.appendChild(td(user[1].admin ? "admin" : "author"))
+      r.appendChild(td(user.admin ? "admin" : "author"))
 
       // edit button
       r.appendChild(td("&#x2699;", () => {
         // using prompt and confirm because lazy
-        const u = prompt("Username", user[0])
+        const u = prompt("Username", user.user)
         if(!u) {
           return
         }
         const pass = prompt("Password (leave blank to keep current)")
         const admin = confirm("Make an admin?")
-        fetch("/api/users", {
+        fetch("/api/users/" + user.cid, {
             method: "PUT",
             body: JSON.stringify({ user: u, pass, admin })
         }).then(updateUsers)
@@ -118,7 +118,7 @@ input {
   // sync with server
   const updateUsers = async () => {
       const r = await fetch("/api/users")
-      const json = Object.entries(await r.json())
+      const json = await r.json()
       const users = json.map(makeUser)
       document.getElementById("users").replaceChildren(...users)
   }

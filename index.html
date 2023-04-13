@@ -43,7 +43,7 @@
 
   // cat element constructor
   // creates an image element that can be dragged and dblclicked to delete
-  const makeCat = ({ x, y, n, id }) => {
+  const makeCat = ({ x, y, n, cid }) => {
     const cat = document.createElement("img")
     cat.src = `//placekitten.com/${n}/${n}`
     cat.draggable = true
@@ -55,7 +55,7 @@
     cat.addEventListener("click", e => e.stopPropagation())
 
     // double click deletes
-    cat.addEventListener("dblclick", e => deleteCat(id))
+    cat.addEventListener("dblclick", e => deleteCat(cid))
 
     // save ref to this cat as well as where on the cat the mouse was at drag start
     cat.addEventListener("dragstart", e => dragon = { cat, x: e.layerX, y: e.layerY })
@@ -65,7 +65,7 @@
       updateCat(...eventToPercentCoords({
           x: e.x - dragon.x + 25,
           y: e.y - dragon.y + 25,
-        }),n,id)
+        }),n,cid)
       // clear ref for great success
       dragon = null
     })
@@ -87,8 +87,8 @@
   }).then(updateCats)
 
   // update an existing cat on the server
-  const updateCat = (x,y,n,id) => fetch("/api", { method: "PUT", body: JSON.stringify({
-      x,y,id,n }) }).then(updateCats)
+  const updateCat = (x,y,n,cid) => fetch("/api", { method: "PUT", body: JSON.stringify({
+      x,y,cid,n }) }).then(updateCats)
 
   // delete a cat from the server
   const deleteCat = (catId) => fetch(`/api/${catId}`, { method: "DELETE" }).then(updateCats)
