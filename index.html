@@ -88,14 +88,14 @@
   const addNewCat = (x,y,n) => fetch("/api", { 
     method: "POST",
     body: JSON.stringify({x,y,n})
-  }).then(updateCats)
+  })
 
   // update an existing cat on the server
   const updateCat = (x,y,n,cid) => fetch("/api", { method: "PUT", body: JSON.stringify({
-      x,y,cid,n }) }).then(updateCats)
+      x,y,cid,n }) })
 
   // delete a cat from the server
-  const deleteCat = (catId) => fetch(`/api/${catId}`, { method: "DELETE" }).then(updateCats)
+  const deleteCat = (catId) => fetch(`/api/${catId}`, { method: "DELETE" })
 
   // clicks on the document create a new cat
   document.body.addEventListener("click", e => addNewCat(...eventToPercentCoords(e), randomN()))
@@ -104,30 +104,45 @@
   document.body.addEventListener("dragover", e => e.preventDefault())
 
   // when the page loads, go ahead and fetch the cats
-  //window.addEventListener("load", updateCats);
+  window.addEventListener("load", updateCats);
   
-  // polling solution
+  // polling solution - simply make the GET every 5 seconds
   // setInterval(updateCats, 5 * 1000)
 
-  // long polling solution
+  // long polling solution - open connection and call 
+  // a function when the server responds.
+
+  /** subscribe a function to the api endpoint /api/subscribe
+   * @param subscriber a function to call whenever the server
+   *   successfully responds to the long poll
+   * @return Promise to do things
+   */
   const subscribe = async (subscriber) => {
     const response = await fetch("/api/subscribe")
-
-    console.log(response)
     const json = await response.json()
-    subscriber(json)
-
+    if(response.status == 502) {
+      // connection timeout, which is fine probably
+    } else if(response.status != 200) {
+      // other errors are bad. one option is to retry
+      // and this is a fancy way to smoosh concept together:
+      // we will await a promise that will resolve in a second
+      await new Promise(resolve => setTimeout(resolve, 1000))
+    } else {
+      // api returned something interesting, maybe
+      subscriber(json)
+    }
+    // whatever happened, we'll resubscribe
     await subscribe(subscriber)
   }
-  subscribe(writeCats)
+  // subscribe the writeCats function to that thing.
+  // subscribe(writeCats)
 
-  // SSE
-  const source = new EventSource("/api/countdown")
-
-  source.addEventListener("message", e => console.log(e.data))
-  source.addEventListener("open", e => console.log(e))
-  source.addEventListener("error", e => console.log(e))
-
+  // SSE solution - create an EventSource, and we just need to
+  // funnel those events to writeCats
+  const source = new EventSource("/api/subscribe")
+  source.addEventListener("message", e => writeCats(JSON.parse(e.data)))
+  source.addEventListener("open", console.log)
+  source.addEventListener("error", console.log)
 </script>
 
 </body>
