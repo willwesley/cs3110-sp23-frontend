@@ -76,6 +76,10 @@
   const updateCats = async () => {
       const r = await fetch("/api")
       const json = await r.json() // parse response as JSON into an object
+      writeCats(json)
+  }
+
+  const writeCats = (json) => {
       const cats = json.map(makeCat) // we expect an array, convert items to cat elements
       document.body.replaceChildren(...cats) // blast the whole body
   }
@@ -100,7 +104,29 @@
   document.body.addEventListener("dragover", e => e.preventDefault())
 
   // when the page loads, go ahead and fetch the cats
-  window.addEventListener("load", updateCats);
+  //window.addEventListener("load", updateCats);
+  
+  // polling solution
+  // setInterval(updateCats, 5 * 1000)
+
+  // long polling solution
+  const subscribe = async (subscriber) => {
+    const response = await fetch("/api/subscribe")
+
+    console.log(response)
+    const json = await response.json()
+    subscriber(json)
+
+    await subscribe(subscriber)
+  }
+  subscribe(writeCats)
+
+  // SSE
+  const source = new EventSource("/api/countdown")
+
+  source.addEventListener("message", e => console.log(e.data))
+  source.addEventListener("open", e => console.log(e))
+  source.addEventListener("error", e => console.log(e))
 
 </script>
 
