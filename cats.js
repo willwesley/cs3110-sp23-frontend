@@ -53,7 +53,7 @@ const updateCats = async () => {
 
 const writeCats = (json) => {
     const cats = json.map(makeCat) // we expect an array, convert items to cat elements
-    document.body.replaceChildren(...cats) // blast the whole body
+    document.getElementById("cats").replaceChildren(...cats) // blast the whole body
 }
 
 // send a new cat to the server
@@ -75,15 +75,20 @@ document.body.addEventListener("click", e => addNewCat(...eventToPercentCoords(e
 // this enables drop (see: https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/drag_event)
 document.body.addEventListener("dragover", e => e.preventDefault())
 
-// when the page loads, go ahead and fetch the cats
-window.addEventListener("load", updateCats);
-
 // polling solution - simply make the GET every 5 seconds
-// setInterval(updateCats, 5 * 1000)
+let polling;
+const doPoll = () => {
+  if(!polling) {
+    polling = setInterval(updateCats, 5 * 1000)
+  }
+}
+const stopPoll = () => {
+  clearInterval(polling)
+}
 
 // long polling solution - open connection and call 
 // a function when the server responds.
-
+let keepLongPolling = false;
 /** subscribe a function to the api endpoint /api/subscribe
  * @param subscriber a function to call whenever the server
  *   successfully responds to the long poll
@@ -104,14 +109,62 @@ const subscribe = async (subscriber) => {
     subscriber(json)
   }
   // whatever happened, we'll resubscribe
-  await subscribe(subscriber)
+  if(keepLongPolling) {
+    await subscribe(subscriber)
+  }
 }
 // subscribe the writeCats function to that thing.
-// subscribe(writeCats)
+const doLongPoll = () => {
+  keepLongPolling = true
+  subscribe(writeCats)
+}
+const stopLongPoll = () => {
+  // technically, this stops after the next long poll completes
+  keepLongPolling = false
+}
 
 // SSE solution - create an EventSource, and we just need to
 // funnel those events to writeCats
-const source = new EventSource("/api/subscribe")
-source.addEventListener("message", e => writeCats(JSON.parse(e.data)))
-source.addEventListener("open", console.log)
-source.addEventListener("error", console.log)
+let source;
+const doSse = () => {
+  source = new EventSource("/api/subscribe")
+  source.addEventListener("message", e => writeCats(JSON.parse(e.data)))
+  source.addEventListener("open", console.log)
+  source.addEventListener("error", console.log)
+}
+const stopSse = () => {
+  if(source) {
+    source.close()
+    source = undefined
+  }
+}
+
+// Setup the drop down thing.
+document.querySelector("#cats~label").addEventListener("click", (e) => {
+  e.stopPropagation()
+})
+document.querySelector("#cats~label").addEventListener("change", (e) => {
+  stopPoll()
+  stopLongPoll()
+  stopSse()
+  switch(e.target.value) {
+    case "poll":
+      doPoll();
+      break
+    case "longpoll":
+      doLongPoll();
+      break
+    case "sse":
+      doSse();
+      break
+    case "ws":
+      alert("Not implemented!");
+      break
+  }
+})
+
+// when the page loads, go ahead and fetch the cats
+window.addEventListener("load", updateCats);
+// and enable the default sync mode
+window.addEventListener("load", doSse);
+

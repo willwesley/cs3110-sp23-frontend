@@ -18,12 +18,26 @@
   }
   label {
     display: block;
+    position: absolute;
+    bottom: 1em;
+    right: 1em;
   }
 </style>
 </head>
 <body>
+  <div id="cats"></div>
+  <label>Sync Mode:
+    <select id="sync_mode">
+      <option value="poll">Poll</option>
+      <option value="longpoll">Long Poll</option>
+      <option value="sse" selected>SSE</option>
+      <option value="ws">Websocket</option>
+    </select>
+  </label>
 
-<script src="cats.js" type="module"></script>
+  <!-- type="module" make it have a private scope
+    as well as the ability to import/export -->
+  <script src="cats.js" type="module"></script>
 
 </body>
 </html>
