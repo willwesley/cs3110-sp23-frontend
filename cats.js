@@ -139,6 +139,18 @@ const stopSse = () => {
   }
 }
 
+let socket
+const doWebSocket = () => {
+  socket = new WebSocket("wss://" + window.location.host + "/api")
+  socket.addEventListener("message", e => writeCats(JSON.parse(e.data)))
+}
+const stopWebSocket = () => {
+  if(socket) {
+    socket.close()
+    socket = undefined
+  }
+}
+
 // Setup the drop down thing.
 document.querySelector("#cats~label").addEventListener("click", (e) => {
   e.stopPropagation()
@@ -147,6 +159,7 @@ document.querySelector("#cats~label").addEventListener("change", (e) => {
   stopPoll()
   stopLongPoll()
   stopSse()
+  stopWebSocket()
   switch(e.target.value) {
     case "poll":
       doPoll();
@@ -158,7 +171,7 @@ document.querySelector("#cats~label").addEventListener("change", (e) => {
       doSse();
       break
     case "ws":
-      alert("Not implemented!");
+      doWebSocket()
       break
   }
 })
